@@ -1,0 +1,43 @@
+# Default configuration for MARS replication
+
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  train_start: "2016-01-01"
+  train_end: "2020-12-31"
+  val_start: "2021-01-01"
+  val_end: "2021-12-31"
+  test_start: "2022-01-01"
+  test_end: "2022-12-31"
+
+env:
+  initial_cash: 1000000.0  # $1M
+  transaction_cost: 0.001  # 0.1%
+  max_trade_size: 0.1  # 10% of portfolio
+  risk_window: 30  # 30 days for risk metrics
+
+risk:
+  max_position_concentration: 0.20  # 20%
+  min_cash_buffer: 0.05  # 5%
+  max_leverage: 1.0  # No leverage
+
+hae:
+  n_agents: 10  # Number of heterogeneous agents
+
+mac:
+  lr: 0.0001
+  epsilon: 1e-6  # For numerical stability in Sharpe calculation
+
+training:
+  n_episodes: 1000
+  batch_size: 64
+  meta_train_freq: 10  # MAC updates every 10 episodes
+  device: "cuda"  # or "cpu"
+
+reproducibility:
+  seed: 42
+
+paths:
+  results_dir: "results"
+  logs_dir: "logs"
+
