@@ -133,7 +133,7 @@ def main():
     parser = argparse.ArgumentParser(description='Run All MARS Experiments')
     parser.add_argument('--config', type=str, default='configs/default.yaml',
                        help='Path to config file')
-    parser.add_argument('--index', type=str, choices=['DJI', 'HSI', 'both'],
+    parser.add_argument('--index', type=str, choices=['DJI', 'HSI', 'QQQ', 'both'],
                        default='both', help='Index to use')
     
     args = parser.parse_args()
@@ -142,9 +142,10 @@ def main():
         config = yaml.safe_load(f)
     
     if args.index == 'both':
-        logger.info("Running experiments for both DJI and HSI")
+        logger.info("Running experiments for DJI, HSI, and QQQ")
         run_all_experiments('DJI', config)
         run_all_experiments('HSI', config)
+        run_all_experiments('QQQ', config)
     else:
         run_all_experiments(args.index, config)
     

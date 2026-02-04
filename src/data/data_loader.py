@@ -1,5 +1,5 @@
 """
-Data loader for fetching DJI and HSI constituent stocks using yfinance.
+Data loader for fetching DJI, HSI, and QQQ constituent stocks using yfinance.
 """
 import yfinance as yf
 import pandas as pd
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataLoader:
-    """Loads OHLCV data for DJI and HSI constituents."""
+    """Loads OHLCV data for DJI, HSI, and QQQ constituents."""
     
     # DJI constituents (as of 2024)
     DJI_TICKERS = [
@@ -35,6 +35,19 @@ class DataLoader:
         '0968.HK', '1109.HK'
     ]
     
+    # QQQ (NASDAQ-100) constituents (as of 2024) - top NASDAQ-100 stocks
+    QQQ_TICKERS = [
+        'AAPL', 'MSFT', 'AMZN', 'NVDA', 'GOOGL', 'GOOG', 'META', 'TSLA', 'AVGO', 'COST',
+        'NFLX', 'AMD', 'PEP', 'ADBE', 'CSCO', 'CMCSA', 'INTC', 'TXN', 'QCOM', 'INTU',
+        'AMGN', 'ISRG', 'BKNG', 'VRTX', 'ADI', 'REGN', 'LRCX', 'SNPS', 'CDNS', 'KLAC',
+        'MRVL', 'NXPI', 'CTSH', 'FTNT', 'ODFL', 'DXCM', 'PAYX', 'FAST', 'TEAM', 'ANSS',
+        'IDXX', 'BKR', 'CTAS', 'WDAY', 'ZS', 'MCHP', 'CDW', 'CPRT', 'PCAR', 'ROST',
+        'VRSK', 'TTD', 'FANG', 'ON', 'CRWD', 'GEHC', 'AEP', 'DLTR', 'GFS', 'ENPH',
+        'EXPD', 'XEL', 'ALGN', 'CTVA', 'EA', 'MELI', 'LULU', 'NTES', 'JD', 'PDD',
+        'BIDU', 'NIO', 'XPEV', 'LI', 'ASML', 'MNST', 'SBUX', 'WBD', 'CHTR', 'TMUS',
+        'PYPL', 'ABNB', 'DASH', 'RIVN', 'LCID', 'PTON', 'HOOD', 'SOFI', 'PLTR', 'SNOW'
+    ]
+    
     def __init__(self, data_dir: str = "data/raw"):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
@@ -46,7 +59,7 @@ class DataLoader:
         Fetch OHLCV data for index constituents.
         
         Args:
-            index_name: 'DJI' or 'HSI'
+            index_name: 'DJI', 'HSI', or 'QQQ'
             tickers: List of ticker symbols
             start_date: Start date (YYYY-MM-DD)
             end_date: End date (YYYY-MM-DD)
@@ -127,18 +140,19 @@ class DataLoader:
                         val_start: str, val_end: str,
                         test_start: str, test_end: str):
         """
-        Prepare train/val/test splits for both indices.
+        Prepare train/val/test splits for all indices.
         
         Returns:
             Dictionary with structure:
             {
                 'dji': {'train': {...}, 'val': {...}, 'test': {...}},
-                'hsi': {'train': {...}, 'val': {...}, 'test': {...}}
+                'hsi': {'train': {...}, 'val': {...}, 'test': {...}},
+                'qqq': {'train': {...}, 'val': {...}, 'test': {...}}
             }
         """
         datasets = {}
         
-        for index_name, tickers in [('DJI', self.DJI_TICKERS), ('HSI', self.HSI_TICKERS)]:
+        for index_name, tickers in [('DJI', self.DJI_TICKERS), ('HSI', self.HSI_TICKERS), ('QQQ', self.QQQ_TICKERS)]:
             logger.info(f"Preparing datasets for {index_name}")
             
             # Fetch all data

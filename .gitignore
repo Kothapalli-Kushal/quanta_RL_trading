@@ -60,6 +60,9 @@ Thumbs.db
 .ipynb_checkpoints/
 *.ipynb
 
+# Documentation (exclude .md files)
+*.md
+
 # TensorBoard
 runs/
 events.out.tfevents.*

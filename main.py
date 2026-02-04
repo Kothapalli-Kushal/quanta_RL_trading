@@ -188,6 +188,16 @@ def run_experiment(index_name: str, config: dict, experiment_name: str = "MARS")
     # Set seed
     set_seed(config['reproducibility']['seed'])
     
+    # Auto-detect device (use GPU if available, otherwise CPU)
+    device = config['training']['device']
+    if device == 'cuda' and not torch.cuda.is_available():
+        logger.warning("CUDA requested but not available. Falling back to CPU.")
+        device = 'cpu'
+    elif device == 'cuda':
+        logger.info(f"Using GPU: {torch.cuda.get_device_name(0)}")
+    else:
+        logger.info(f"Using device: {device}")
+    
     # Prepare data
     datasets = prepare_data(index_name, config)
     if datasets is None:
@@ -200,8 +210,10 @@ def run_experiment(index_name: str, config: dict, experiment_name: str = "MARS")
     # Train
     train_features = datasets['train']
     train_env = create_environment(train_features, config)
-    hae, mac, risk_overlay = create_models(train_env, config, config['training']['device'])
+    hae, mac, risk_overlay = create_models(train_env, config, device)
     
+    # Update config with detected device
+    config['training']['device'] = device
     trainer, training_stats = train_mars(
         train_env, hae, mac, risk_overlay, config, str(results_dir)
     )
@@ -268,7 +280,7 @@ def main():
     parser = argparse.ArgumentParser(description='MARS Paper Replication')
     parser.add_argument('--config', type=str, default='configs/default.yaml',
                        help='Path to config file')
-    parser.add_argument('--index', type=str, choices=['DJI', 'HSI'], default='DJI',
+    parser.add_argument('--index', type=str, choices=['DJI', 'HSI', 'QQQ'], default='DJI',
                        help='Index to use')
     parser.add_argument('--experiment', type=str, default='MARS',
                        help='Experiment name (MARS, MARS-Static, etc.)')

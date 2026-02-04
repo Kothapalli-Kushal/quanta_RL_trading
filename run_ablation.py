@@ -206,7 +206,7 @@ def main():
     parser = argparse.ArgumentParser(description='Run MARS Ablation Studies')
     parser.add_argument('--config', type=str, default='configs/default.yaml',
                        help='Path to config file')
-    parser.add_argument('--index', type=str, choices=['DJI', 'HSI'], default='DJI',
+    parser.add_argument('--index', type=str, choices=['DJI', 'HSI', 'QQQ'], default='DJI',
                        help='Index to use')
     parser.add_argument('--ablation', type=str,
                        choices=['MARS-Static', 'MARS-Homogeneous', 'MARS-Div5', 'MARS-Div15'],
