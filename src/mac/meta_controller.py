@@ -10,6 +10,8 @@ import random
 from typing import Tuple, Optional
 import logging
 
+# torch is already imported above, so the CUDA check should work
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
