@@ -101,7 +101,8 @@ class PortfolioEnv:
         
         # Normalized cash (log scale) - ensure it's a 1D array
         cash_norm = np.log1p(self.cash / self.initial_cash)
-        state_parts.append(np.array([cash_norm]))
+        cash_norm = np.atleast_1d(cash_norm)
+        state_parts.append(cash_norm)
         
         # Current prices
         current_date = self.dates[self.current_step]
@@ -111,11 +112,12 @@ class PortfolioEnv:
         # Portfolio value
         portfolio_value = self.cash + np.sum(self.holdings * self.prices)
         
-        # Normalized holdings (as fraction of portfolio)
+        # Normalized holdings (as fraction of portfolio) - ensure it's a 1D array
         if portfolio_value > 0:
             holdings_norm = (self.holdings * self.prices) / portfolio_value
         else:
             holdings_norm = np.zeros(self.n_assets)
+        holdings_norm = np.atleast_1d(holdings_norm)
         state_parts.append(holdings_norm)
         
         # Feature vectors per asset (5 features each)
@@ -128,6 +130,8 @@ class PortfolioEnv:
                 feature_vec = feature_vec.flatten()
             state_parts.append(feature_vec)
         
+        # Ensure all parts are 1D before concatenation
+        state_parts = [np.atleast_1d(part) for part in state_parts]
         state = np.concatenate(state_parts)
         return state.astype(np.float32)
     
