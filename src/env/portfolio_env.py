@@ -99,9 +99,9 @@ class PortfolioEnv:
         """
         state_parts = []
         
-        # Normalized cash (log scale)
+        # Normalized cash (log scale) - ensure it's a 1D array
         cash_norm = np.log1p(self.cash / self.initial_cash)
-        state_parts.append(cash_norm)
+        state_parts.append(np.array([cash_norm]))
         
         # Current prices
         current_date = self.dates[self.current_step]
@@ -122,6 +122,11 @@ class PortfolioEnv:
         for ticker in self.tickers:
             features = self.feature_data[ticker].loc[current_date]
             feature_vec = features[['price', 'macd', 'rsi', 'cci', 'adx']].values
+            # Ensure feature_vec is 1D array
+            if feature_vec.ndim == 0:
+                feature_vec = np.array([feature_vec])
+            elif feature_vec.ndim > 1:
+                feature_vec = feature_vec.flatten()
             state_parts.append(feature_vec)
         
         state = np.concatenate(state_parts)
