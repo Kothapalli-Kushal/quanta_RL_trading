@@ -122,10 +122,9 @@ class PortfolioEnv:
         for ticker in self.tickers:
             features = self.feature_data[ticker].loc[current_date]
             feature_vec = features[['price', 'macd', 'rsi', 'cci', 'adx']].values
-            # Ensure feature_vec is 1D array
-            if feature_vec.ndim == 0:
-                feature_vec = np.array([feature_vec])
-            elif feature_vec.ndim > 1:
+            # Ensure feature_vec is always a 1D array
+            feature_vec = np.atleast_1d(feature_vec)
+            if feature_vec.ndim > 1:
                 feature_vec = feature_vec.flatten()
             state_parts.append(feature_vec)
         
