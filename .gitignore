@@ -20,10 +20,10 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual environments
-venv/
-env/
-ENV/
+# Virtual environments (only at root level)
+/venv/
+/env/
+/ENV/
 
 # Data
 data/raw/
