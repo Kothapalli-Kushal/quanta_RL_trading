@@ -99,7 +99,8 @@ class MetaAdaptiveController:
         """
         self.state_dim = state_dim
         self.n_agents = n_agents
-        self.epsilon = epsilon
+        # Ensure epsilon is a float (in case it comes from YAML as string)
+        self.epsilon = float(epsilon)
         self.device = device
         
         # Network
@@ -109,7 +110,9 @@ class MetaAdaptiveController:
         # Replay buffer
         self.replay_buffer = MACReplayBuffer()
         
-        logger.info(f"Initialized MAC with {n_agents} agents")
+        logger.info(f"Initialized MAC with {n_agents} agents on {device}")
+        if device == 'cuda' and torch.cuda.is_available():
+            logger.info(f"MAC using GPU: {torch.cuda.get_device_name(0)}")
     
     def compute_weights(self, state: np.ndarray) -> np.ndarray:
         """
@@ -157,7 +160,9 @@ class MetaAdaptiveController:
         # Sharpe-like term: E[Q̄] / (Std(Q̄) + ε)
         q_mean = q_bars.mean()
         q_std = q_bars.std()
-        sharpe_term = q_mean / (q_std + self.epsilon)
+        # Ensure epsilon is a tensor on the same device
+        epsilon_tensor = torch.tensor(self.epsilon, dtype=q_std.dtype, device=q_std.device)
+        sharpe_term = q_mean / (q_std + epsilon_tensor)
         
         # Safety term: 0.5 * E[C̄]
         safety_term = 0.5 * c_bars.mean()

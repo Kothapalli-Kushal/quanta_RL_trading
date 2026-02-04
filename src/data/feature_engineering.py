@@ -100,8 +100,8 @@ class FeatureEngineer:
         # Feature 5: ADX
         features['adx'] = self.compute_adx(high, low, close)
         
-        # Fill NaN values
-        features = features.fillna(method='bfill').fillna(0)
+        # Fill NaN values (backward fill, then forward fill with 0)
+        features = features.bfill().fillna(0)
         
         return features
     

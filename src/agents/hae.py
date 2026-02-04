@@ -54,9 +54,11 @@ class HeterogeneousAgentEnsemble:
             )
             self.agents.append(agent)
         
-        logger.info(f"Initialized HAE with {n_agents} agents")
+        logger.info(f"Initialized HAE with {n_agents} agents on {device}")
         logger.info(f"Risk thresholds: {risk_thresholds}")
         logger.info(f"Risk penalties: {risk_penalties}")
+        if device == 'cuda' and torch.cuda.is_available():
+            logger.info(f"HAE using GPU: {torch.cuda.get_device_name(0)}")
     
     def select_actions(self, state: np.ndarray, add_noise: bool = True) -> np.ndarray:
         """
