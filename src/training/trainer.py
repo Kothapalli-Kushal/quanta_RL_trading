@@ -92,13 +92,19 @@ class Trainer:
             cash = self.env.cash
             portfolio_value = self.env._compute_portfolio_value()
             
-            # Convert action to allocation
+            # Convert aggregated action (in [-1, 1]) to target allocation
             current_allocation = (current_holdings * current_prices) / portfolio_value if portfolio_value > 0 else np.zeros(self.env.n_assets)
+            
+            # Convert action to target allocation: current + action * max_trade_size
+            target_allocation = current_allocation + aggregated_action * self.env.max_trade_size
+            target_allocation = np.clip(target_allocation, 0.0, 1.0)  # Ensure no shorts
+            
+            # Apply risk overlay to get constrained allocation
             constrained_allocation, new_cash = self.risk_overlay.apply(
-                aggregated_action, current_holdings, current_prices, cash, portfolio_value
+                target_allocation, current_holdings, current_prices, cash, portfolio_value
             )
             
-            # Convert back to action space (approximate)
+            # Convert back to action space for environment
             action_for_env = constrained_allocation - current_allocation
             action_for_env = np.clip(action_for_env / self.env.max_trade_size, -1.0, 1.0)
             
