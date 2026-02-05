@@ -243,6 +243,17 @@ class PortfolioEnv:
         # Deduct transaction cost
         self.cash -= transaction_cost
         
+        # Safety check: ensure cash doesn't go negative
+        if self.cash < 0:
+            # Sell holdings to cover negative cash (emergency liquidation)
+            for i in range(self.n_assets):
+                if self.holdings[i] > 0 and self.cash < 0:
+                    shares_to_sell = min(self.holdings[i], abs(self.cash) / self.prices[i] + 1e-6)
+                    self.holdings[i] -= shares_to_sell
+                    self.cash += shares_to_sell * self.prices[i]
+                    if self.cash >= 0:
+                        break
+        
         # Move to next step
         self.current_step += 1
         
