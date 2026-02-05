@@ -258,16 +258,23 @@ class PortfolioEnv:
         self.portfolio_value_history.append(V_t1)
         
         # Compute reward
-        if V_t > 0:
+        if V_t > 1e-6:  # Avoid division by very small numbers
             return_rate = (V_t1 - V_t) / V_t
+            transaction_cost_penalty = transaction_cost / V_t
         else:
             return_rate = 0.0
+            transaction_cost_penalty = 0.0
         
         # Risk penalty
         risk_penalty = self._compute_risk_penalty()
         
-        # Total reward
-        reward = return_rate - (transaction_cost / V_t if V_t > 0 else 0) - risk_penalty
+        # Total reward (with NaN checks)
+        reward = return_rate - transaction_cost_penalty - risk_penalty
+        
+        # Check for NaN and clip to reasonable range
+        if np.isnan(reward) or np.isinf(reward):
+            reward = 0.0
+        reward = np.clip(reward, -1.0, 1.0)  # Clip to reasonable range
         
         self.returns_history.append(return_rate)
         
