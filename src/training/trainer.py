@@ -32,6 +32,7 @@ class Trainer:
                  risk_overlay: RiskOverlay,
                  meta_train_freq: int = 10,
                  batch_size: int = 64,
+                 agent_update_freq: int = 1,
                  device: str = 'cuda'):
         """
         Args:
@@ -41,6 +42,7 @@ class Trainer:
             risk_overlay: Risk management overlay
             meta_train_freq: Frequency of MAC updates (in episodes)
             batch_size: Batch size for updates
+            agent_update_freq: Frequency of agent updates (1 = every step, 2 = every 2 steps, etc.)
             device: Device for computation
         """
         self.env = env
@@ -50,7 +52,7 @@ class Trainer:
         self.meta_train_freq = meta_train_freq
         self.batch_size = batch_size
         self.device = device
-        self.agent_update_freq = 4  # Update agents every 4 steps instead of every step
+        self.agent_update_freq = agent_update_freq  # Configurable update frequency
         
         # Training statistics
         self.episode_rewards = []

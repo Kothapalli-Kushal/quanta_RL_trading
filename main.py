@@ -122,6 +122,7 @@ def train_mars(env: PortfolioEnv, hae: HeterogeneousAgentEnsemble, mac: MetaAdap
         risk_overlay=risk_overlay,
         meta_train_freq=config['training']['meta_train_freq'],
         batch_size=config['training']['batch_size'],
+        agent_update_freq=config['training'].get('agent_update_freq', 1),  # Default to 1 (every step) if not specified
         device=config['training']['device']
     )
     
