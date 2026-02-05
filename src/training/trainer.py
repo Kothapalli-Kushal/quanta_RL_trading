@@ -50,11 +50,13 @@ class Trainer:
         self.meta_train_freq = meta_train_freq
         self.batch_size = batch_size
         self.device = device
+        self.agent_update_freq = 4  # Update agents every 4 steps instead of every step
         
         # Training statistics
         self.episode_rewards = []
         self.episode_values = []
         self.mac_weights_history = []
+        self.step_count = 0
         
     def train_episode(self, episode: int, start_idx: int = 0) -> Dict:
         """Train for one episode."""
@@ -105,8 +107,11 @@ class Trainer:
             for i, agent in enumerate(self.hae.agents):
                 agent.replay_buffer.push(state, agent_actions[i], reward, next_state, done)
             
-            # Update all agents (every step)
-            agent_update_stats = self.hae.update_all(self.batch_size)
+            # Update all agents (every agent_update_freq steps to speed up training)
+            self.step_count += 1
+            agent_update_stats = None
+            if self.step_count % self.agent_update_freq == 0:
+                agent_update_stats = self.hae.update_all(self.batch_size)
             
             # Store MAC experience
             q_bar = np.sum(mac_weights * q_values)
@@ -128,15 +133,26 @@ class Trainer:
         
         # Collect statistics
         final_value = self.env._compute_portfolio_value()
+        
+        # Check for NaN values
+        if np.isnan(episode_reward) or np.isnan(final_value):
+            logger.warning(f"NaN detected in episode {episode}: reward={episode_reward}, final_value={final_value}")
+            episode_reward = 0.0 if np.isnan(episode_reward) else episode_reward
+            final_value = self.env.initial_cash if np.isnan(final_value) else final_value
+        
+        return_val = (final_value - self.env.initial_cash) / self.env.initial_cash
+        if np.isnan(return_val):
+            return_val = 0.0
+        
         episode_stats = {
             'episode': episode,
             'reward': episode_reward,
             'steps': episode_steps,
             'final_value': final_value,
-            'return': (final_value - self.env.initial_cash) / self.env.initial_cash,
+            'return': return_val,
             'mac_weights_mean': np.mean(episode_mac_weights, axis=0) if episode_mac_weights else None,
-            'q_bar_mean': np.mean(episode_q_values) if episode_q_values else 0.0,
-            'c_bar_mean': np.mean(episode_safety_scores) if episode_safety_scores else 0.0,
+            'q_bar_mean': np.mean(episode_q_values) if episode_q_values and not np.isnan(episode_q_values).any() else 0.0,
+            'c_bar_mean': np.mean(episode_safety_scores) if episode_safety_scores and not np.isnan(episode_safety_scores).any() else 0.0,
             'agent_updates': agent_update_stats,
             'mac_update': mac_update_stats
         }

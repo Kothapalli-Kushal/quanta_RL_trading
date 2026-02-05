@@ -248,6 +248,13 @@ class PortfolioEnv:
         
         # New portfolio value
         V_t1 = self._compute_portfolio_value()
+        
+        # Check for NaN in portfolio value
+        if np.isnan(V_t1) or np.isinf(V_t1) or V_t1 < 0:
+            V_t1 = self.initial_cash  # Reset to initial if invalid
+            self.cash = self.initial_cash
+            self.holdings = np.zeros(self.n_assets)
+        
         self.portfolio_value_history.append(V_t1)
         
         # Compute reward

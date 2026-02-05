@@ -189,15 +189,40 @@ class DDPGAgent:
         self.critic_optimizer.step()
         
         # Update Safety-Critic (C-function)
-        # Compute environment risk scores for batch
-        env_risk_scores = []
-        for i in range(batch_size):
-            state_np = states[i].cpu().numpy()
-            action_np = actions[i].cpu().numpy()
-            risk_score = self.compute_env_risk_score(state_np, action_np)
-            env_risk_scores.append(risk_score)
+        # Compute environment risk scores for batch (vectorized)
+        states_np = states.cpu().numpy()
+        actions_np = actions.cpu().numpy()
+        n_assets = self.action_dim
+        holdings_start_idx = 1
         
-        env_risk_scores = torch.FloatTensor(env_risk_scores).unsqueeze(1).to(self.device)
+        # Vectorized computation
+        holdings = states_np[:, holdings_start_idx:holdings_start_idx + n_assets]
+        
+        # Concentration (HHI) for all samples
+        hhi = np.sum(holdings ** 2, axis=1)
+        
+        # Max position concentration
+        max_position = np.max(holdings, axis=1)
+        
+        # Leverage
+        leverage = np.sum(np.abs(holdings), axis=1)
+        
+        # Action impact
+        action_magnitude = np.linalg.norm(actions_np, axis=1)
+        
+        # Combined risk score (vectorized)
+        risk_scores = (
+            0.3 * hhi +
+            0.3 * (max_position / 0.2) +
+            0.2 * np.minimum(leverage, 1.0) +
+            0.2 * np.minimum(action_magnitude / np.sqrt(n_assets), 1.0)
+        )
+        risk_scores = np.clip(risk_scores, 0.0, 1.0)
+        
+        # Check for NaN
+        risk_scores = np.nan_to_num(risk_scores, nan=0.5)  # Default to medium risk if NaN
+        
+        env_risk_scores = torch.FloatTensor(risk_scores).unsqueeze(1).to(self.device)
         
         predicted_risk = self.safety_critic(states, actions)
         safety_loss = nn.MSELoss()(predicted_risk, env_risk_scores)

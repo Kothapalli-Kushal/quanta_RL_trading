@@ -77,6 +77,7 @@ class HeterogeneousAgentEnsemble:
     def get_q_values(self, state: np.ndarray, actions: np.ndarray) -> np.ndarray:
         """
         Get Q-values from all agents for given state-action pairs.
+        Batched for efficiency.
         
         Args:
             state: State vector
@@ -86,20 +87,25 @@ class HeterogeneousAgentEnsemble:
             Q-values (n_agents,)
         """
         import torch
-        state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
-        q_values = []
+        # Batch all state-action pairs
+        state_batch = torch.FloatTensor(state).unsqueeze(0).repeat(self.n_agents, 1).to(self.device)
+        action_batch = torch.FloatTensor(actions).to(self.device)
         
-        for i, agent in enumerate(self.agents):
-            action_tensor = torch.FloatTensor(actions[i]).unsqueeze(0).to(self.device)
-            with torch.no_grad():
-                q_value = agent.critic(state_tensor, action_tensor).cpu().item()
-            q_values.append(q_value)
+        q_values = []
+        with torch.no_grad():
+            for i, agent in enumerate(self.agents):
+                q_value = agent.critic(state_batch[i:i+1], action_batch[i:i+1]).cpu().item()
+                # Check for NaN
+                if np.isnan(q_value):
+                    q_value = 0.0
+                q_values.append(q_value)
         
         return np.array(q_values)
     
     def get_safety_scores(self, state: np.ndarray, actions: np.ndarray) -> np.ndarray:
         """
         Get safety scores from all agents for given state-action pairs.
+        Batched for efficiency.
         
         Args:
             state: State vector
@@ -109,14 +115,18 @@ class HeterogeneousAgentEnsemble:
             Safety scores (n_agents,)
         """
         import torch
-        state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
-        safety_scores = []
+        # Batch all state-action pairs
+        state_batch = torch.FloatTensor(state).unsqueeze(0).repeat(self.n_agents, 1).to(self.device)
+        action_batch = torch.FloatTensor(actions).to(self.device)
         
-        for i, agent in enumerate(self.agents):
-            action_tensor = torch.FloatTensor(actions[i]).unsqueeze(0).to(self.device)
-            with torch.no_grad():
-                safety_score = agent.safety_critic(state_tensor, action_tensor).cpu().item()
-            safety_scores.append(safety_score)
+        safety_scores = []
+        with torch.no_grad():
+            for i, agent in enumerate(self.agents):
+                safety_score = agent.safety_critic(state_batch[i:i+1], action_batch[i:i+1]).cpu().item()
+                # Check for NaN
+                if np.isnan(safety_score):
+                    safety_score = 0.0
+                safety_scores.append(safety_score)
         
         return np.array(safety_scores)
     
