@@ -29,7 +29,7 @@ mac:
   epsilon: 1e-6  # For numerical stability in Sharpe calculation
 
 training:
-  n_episodes: 1000
+  n_episodes: 500
   batch_size: 64
   meta_train_freq: 10  # MAC updates every 10 episodes
   agent_update_freq: 2  # Agent updates every N steps (1 = every step, 2 = every 2 steps, etc.)
