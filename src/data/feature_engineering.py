@@ -100,8 +100,9 @@ class FeatureEngineer:
         # Feature 5: ADX
         features['adx'] = self.compute_adx(high, low, close)
         
-        # Fill NaN values (backward fill, then forward fill with 0)
-        features = features.bfill().fillna(0)
+        # Fill NaN values (forward fill only - no lookahead bias)
+        # Use forward fill to propagate last valid value forward, then fill remaining NaNs with 0
+        features = features.ffill().fillna(0)
         
         return features
     

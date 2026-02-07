@@ -109,6 +109,11 @@ class PortfolioEnv:
         self.prices = np.array([self.price_data[ticker].loc[current_date] 
                                for ticker in self.tickers])
         
+        # Clean prices: replace NaN and Inf with last valid price or default
+        if np.any(np.isnan(self.prices)) or np.any(np.isinf(self.prices)):
+            # Replace NaN/Inf prices with a default (e.g., 100.0) or forward fill
+            self.prices = np.nan_to_num(self.prices, nan=100.0, posinf=100.0, neginf=100.0)
+        
         # Portfolio value
         portfolio_value = self.cash + np.sum(self.holdings * self.prices)
         
@@ -128,11 +133,17 @@ class PortfolioEnv:
             feature_vec = np.atleast_1d(feature_vec)
             if feature_vec.ndim > 1:
                 feature_vec = feature_vec.flatten()
+            # Clean feature vector: replace NaN and Inf
+            feature_vec = np.nan_to_num(feature_vec, nan=0.0, posinf=1.0, neginf=-1.0)
             state_parts.append(feature_vec)
         
         # Ensure all parts are 1D before concatenation
         state_parts = [np.atleast_1d(part) for part in state_parts]
         state = np.concatenate(state_parts)
+        
+        # Clean state: replace NaN and Inf with valid values
+        state = np.nan_to_num(state, nan=0.0, posinf=1.0, neginf=-1.0)
+        
         return state.astype(np.float32)
     
     def _compute_portfolio_value(self) -> float:
@@ -201,7 +212,16 @@ class PortfolioEnv:
         if self.current_step >= len(self.dates) - 1:
             return self._get_state(), 0.0, True, {}
         
-        # Current portfolio value
+        # CRITICAL: Fetch prices for current step (t) to avoid lookahead bias
+        # Ensure we're using prices from the current time step, not future
+        current_date = self.dates[self.current_step]
+        self.prices = np.array([self.price_data[ticker].loc[current_date] 
+                               for ticker in self.tickers])
+        # Clean prices
+        if np.any(np.isnan(self.prices)) or np.any(np.isinf(self.prices)):
+            self.prices = np.nan_to_num(self.prices, nan=100.0, posinf=100.0, neginf=100.0)
+        
+        # Current portfolio value (using prices at time t)
         V_t = self._compute_portfolio_value()
         
         # Clip action to valid range
@@ -257,8 +277,23 @@ class PortfolioEnv:
         # Move to next step
         self.current_step += 1
         
-        # New portfolio value
-        V_t1 = self._compute_portfolio_value()
+        # Fetch prices for next step (t+1) to compute V_{t+1}
+        if self.current_step < len(self.dates):
+            next_date = self.dates[self.current_step]
+            next_prices = np.array([self.price_data[ticker].loc[next_date] 
+                                   for ticker in self.tickers])
+            # Clean prices
+            if np.any(np.isnan(next_prices)) or np.any(np.isinf(next_prices)):
+                next_prices = np.nan_to_num(next_prices, nan=100.0, posinf=100.0, neginf=100.0)
+        else:
+            # Use last known prices if at end
+            next_prices = self.prices.copy()
+        
+        # Update self.prices to next_prices for consistency (now at time t+1)
+        self.prices = next_prices.copy()
+        
+        # Compute portfolio value at t+1 using next day's prices
+        V_t1 = self.cash + np.sum(self.holdings * self.prices)
         
         # Check for NaN in portfolio value
         if np.isnan(V_t1) or np.isinf(V_t1) or V_t1 < 0:
