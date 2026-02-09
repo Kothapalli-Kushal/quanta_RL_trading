@@ -101,7 +101,7 @@ class MACTrainer:
         self.device = device
         
         self.optimizer = torch.optim.Adam(
-            mac_controller.parameters(), lr=config.mac_lr
+            mac_controller.parameters(), lr=config.mac.mac_lr
         )
     
     def compute_loss(self, mac_states: torch.Tensor, q_values: torch.Tensor,

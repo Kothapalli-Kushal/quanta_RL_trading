@@ -82,14 +82,13 @@ class MacroLoader:
             target_dates = pd.to_datetime(target_dates)
         
         # Reindex to target dates with forward fill
-        aligned = self.macro_data.reindex(
-            target_dates,
-            method='ffill',
-            limit=self.forward_fill_days
-        )
+        aligned = self.macro_data.reindex(target_dates)
         
-        # Fill any remaining NaN with last valid value or zero
-        aligned = aligned.fillna(method='ffill').fillna(0.0)
+        # Forward fill with limit
+        aligned = aligned.ffill(limit=self.forward_fill_days)
+        
+        # Fill any remaining NaN with zero
+        aligned = aligned.fillna(0.0)
         
         return aligned[self.feature_names].values
     

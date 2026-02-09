@@ -70,7 +70,12 @@ class SignalRegistry:
         
         # Merge default config with provided kwargs
         config = cls._default_configs.get(name, {}).copy()
-        config.update(kwargs)
+        # Don't override name if it's already in default config
+        if 'name' not in kwargs or 'name' not in config:
+            config.update(kwargs)
+        else:
+            # If both have name, use the one from kwargs
+            config.update(kwargs)
         
         return signal_class(**config)
     
