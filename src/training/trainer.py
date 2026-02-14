@@ -167,9 +167,10 @@ class Trainer:
         
         return episode_stats
     
-    def train(self, n_episodes: int, start_idx: int = 0, log_dir: str = "logs"):
+    def train(self, n_episodes: int, start_idx: int = 0, log_dir: Optional[str] = "logs"):
         """Train for n_episodes."""
-        os.makedirs(log_dir, exist_ok=True)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
         
         logger.info(f"Starting training for {n_episodes} episodes")
         
@@ -201,6 +202,7 @@ class Trainer:
     def save_models(self, save_dir: str):
         """Save all models."""
         os.makedirs(save_dir, exist_ok=True)
+        os.makedirs(f"{save_dir}/agents", exist_ok=True)
         self.hae.save_all(f"{save_dir}/agents")
         self.mac.save(f"{save_dir}/mac.pth")
         logger.info(f"Models saved to {save_dir}")

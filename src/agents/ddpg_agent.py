@@ -9,6 +9,7 @@ from collections import deque
 import random
 from typing import Tuple, Optional
 import logging
+import os
 
 from .networks import Actor, Critic, SafetyCritic
 
@@ -273,6 +274,9 @@ class DDPGAgent:
     
     def save(self, filepath: str):
         """Save agent state."""
+        parent = os.path.dirname(filepath)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
         torch.save({
             'actor': self.actor.state_dict(),
             'critic': self.critic.state_dict(),
@@ -285,8 +289,11 @@ class DDPGAgent:
         }, filepath)
     
     def load(self, filepath: str):
-        """Load agent state."""
-        checkpoint = torch.load(filepath, map_location=self.device)
+        """Load agent state (weights_only=False for checkpoints with numpy scalars)."""
+        try:
+            checkpoint = torch.load(filepath, map_location=self.device, weights_only=False)
+        except TypeError:
+            checkpoint = torch.load(filepath, map_location=self.device)
         self.actor.load_state_dict(checkpoint['actor'])
         self.critic.load_state_dict(checkpoint['critic'])
         self.safety_critic.load_state_dict(checkpoint['safety_critic'])

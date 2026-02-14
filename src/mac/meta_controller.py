@@ -9,6 +9,7 @@ from collections import deque
 import random
 from typing import Tuple, Optional
 import logging
+import os
 
 # torch is already imported above, so the CUDA check should work
 
@@ -215,12 +216,18 @@ class MetaAdaptiveController:
     
     def save(self, filepath: str):
         """Save MAC state."""
+        parent = os.path.dirname(filepath)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
         torch.save({
             'network': self.network.state_dict(),
         }, filepath)
     
     def load(self, filepath: str):
         """Load MAC state."""
-        checkpoint = torch.load(filepath, map_location=self.device)
+        try:
+            checkpoint = torch.load(filepath, map_location=self.device, weights_only=False)
+        except TypeError:
+            checkpoint = torch.load(filepath, map_location=self.device)
         self.network.load_state_dict(checkpoint['network'])
 
